@@ -38,11 +38,39 @@ class SiameseLSTM(object):
         # Get lstm cell output
         # try:
         with tf.name_scope("bw" + scope), tf.variable_scope("bw" + scope):
-            outputs,states_,_ = tf.contrib.rnn.static_bidirectional_rnn(lstm_fw_cell_m, lstm_bw_cell_m, x, dtype=tf.float32)
+            outputs, states_, _ = tf.contrib.rnn.static_bidirectional_rnn(lstm_fw_cell_m, lstm_bw_cell_m, x,
+                                                                          dtype=tf.float32)
             #         except Exception: # Old TensorFlow version only returns outputs not states
             #             outputs = tf.contrib.bidirectional_rnn(lstm_fw_cell_m, lstm_bw_cell_m, x,
             #                                             dtype=tf.float32)
         return outputs[-1]
+
+    # def lstm(self, x, dropout, scope, embedding_size, sequence_length):
+    #     n_input = embedding_size
+    #     n_steps = sequence_length
+    #     n_hidden = n_steps
+    #     n_layers = 1
+    #     # Prepare data shape to match `bidirectional_rnn` function requirements
+    #     # Current data input shape: (batch_size, n_steps, n_input) (?, seq_len, embedding_size)
+    #     # Required shape: 'n_steps' tensors list of shape (batch_size, n_input)
+    #     # Permuting batch_size and n_steps
+    #     x = tf.transpose(x, [1, 0, 2])
+    #     # Reshape to (n_steps*batch_size, n_input)
+    #     x = tf.reshape(x, [-1, n_input])
+    #     # Split to get a list of 'n_steps' tensors of shape (batch_size, n_input)
+    #     x = tf.split(axis=0, num_or_size_splits=n_steps, value=x)
+    #     # Define lstm cells with tensorflow
+    #     # Forward direction cell
+    #     with tf.name_scope("lstm_l" + scope), tf.variable_scope("lstm_l" + scope):
+    #         print(tf.get_variable_scope().name)
+    #         lstm_cell = tf.contrib.rnn.BasicLSTMCell(n_hidden, forget_bias=1.0, state_is_tuple=True)
+    #         lstm_cell = tf.contrib.rnn.DropoutWrapper(lstm_cell, output_keep_prob=dropout)
+    #         lstm_cell = tf.contrib.rnn.MultiRNNCell([lstm_cell] * n_layers, state_is_tuple=True)
+    #
+    #     with tf.name_scope("static_rnn" + scope), tf.variable_scope("static_rnn" + scope):
+    #         outputs, state = tf.contrib.rnn.static_rnn(lstm_cell, x, dtype=tf.float32)
+    #
+    #     return outputs[-1]
 
     def contrastive_loss(self, y, d, batch_size):
         tmp = y * tf.square(d)

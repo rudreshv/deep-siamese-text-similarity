@@ -14,13 +14,13 @@ from input_helpers import InputHelper
 # Eval Parameters
 tf.flags.DEFINE_integer("batch_size", 64, "Batch Size (default: 64)")
 tf.flags.DEFINE_string("checkpoint_dir", "", "Checkpoint directory from training run")
-# tf.flags.DEFINE_string("eval_filepath", "match_valid.tsv",
+# tf.flags.DEFINE_string("eval_filepath", "/Users/rudresh/git/deep-siamese-text-similarity/test/data/match_valid.tsv",
 #                        "Evaluate on this data (Default: None)")
 tf.flags.DEFINE_string("eval_filepath", "/Users/rudresh/Downloads/kaggle-quora-nlp/test.csv",
                        "Evaluate on this data (Default: None)")
-tf.flags.DEFINE_string("vocab_filepath", "runs/1493191223/checkpoints/vocab",
+tf.flags.DEFINE_string("vocab_filepath", "runs/1493291091/checkpoints/vocab",
                        "Load training time vocabulary (Default: None)")
-tf.flags.DEFINE_string("model", "runs/1493191223/checkpoints/model-20000",
+tf.flags.DEFINE_string("model", "runs/1493291091/checkpoints/model-2000",
                        "Load trained model checkpoint (Default: None)")
 
 # Misc Parameters

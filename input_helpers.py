@@ -9,7 +9,6 @@ from tensorflow.contrib import learn
 from gensim.models.word2vec import Word2Vec
 import gzip
 from random import random
-from preprocess import MyVocabularyProcessor
 import sys
 
 # reload(sys)
@@ -146,7 +145,7 @@ class InputHelper(object):
         id_list, x1_temp, x2_temp = self.getTsvTestData(data_path)
 
         # Build vocabulary
-        vocab_processor = MyVocabularyProcessor(max_document_length, min_frequency=0)
+        vocab_processor = learn.preprocessing.VocabularyProcessor(max_document_length, min_frequency=0)
         vocab_processor = vocab_processor.restore(vocab_path)
         # print(len(vocab_processor.vocabulary_))
 

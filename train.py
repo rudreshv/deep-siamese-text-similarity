@@ -30,7 +30,9 @@ tf.flags.DEFINE_integer("checkpoint_every", 1000, "Save model after this many st
 # Misc Parameters
 tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
-tf.flags.DEFINE_string("word2vec", "/Users/rudresh/git/Siamese-LSTM/GoogleNews-vectors-negative300.bin",
+# tf.flags.DEFINE_string("word2vec", "/Users/rudresh/git/Siamese-LSTM/GoogleNews-vectors-negative300.bin",
+#                        "use word2vec pre-trained vectors")
+tf.flags.DEFINE_string("word2vec", None,
                        "use word2vec pre-trained vectors")
 
 FLAGS = tf.flags.FLAGS
