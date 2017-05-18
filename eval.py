@@ -14,13 +14,13 @@ from input_helpers import InputHelper
 # Eval Parameters
 tf.flags.DEFINE_integer("batch_size", 64, "Batch Size (default: 64)")
 tf.flags.DEFINE_string("checkpoint_dir", "", "Checkpoint directory from training run")
-# tf.flags.DEFINE_string("eval_filepath", "/Users/rudresh/git/deep-siamese-text-similarity/test/data/match_valid.tsv",
-#                        "Evaluate on this data (Default: None)")
-tf.flags.DEFINE_string("eval_filepath", "/Users/rudresh/Downloads/kaggle-quora-nlp/test.csv",
+tf.flags.DEFINE_string("eval_filepath", "/Users/rudresh/git/deep-siamese-text-similarity/test/data/match_valid_copy.tsv",
                        "Evaluate on this data (Default: None)")
-tf.flags.DEFINE_string("vocab_filepath", "runs/1493291091/checkpoints/vocab",
+# tf.flags.DEFINE_string("eval_filepath", "/Users/rudresh/Downloads/kaggle-quora-nlp/test.csv",
+#                        "Evaluate on this data (Default: None)")
+tf.flags.DEFINE_string("vocab_filepath", "runs/1495015126/checkpoints/vocab",
                        "Load training time vocabulary (Default: None)")
-tf.flags.DEFINE_string("model", "runs/1493291091/checkpoints/model-2000",
+tf.flags.DEFINE_string("model", "runs/1495015126/checkpoints/model-31000",
                        "Load trained model checkpoint (Default: None)")
 
 # Misc Parameters
@@ -41,6 +41,13 @@ if FLAGS.eval_filepath == None or FLAGS.vocab_filepath == None or FLAGS.model ==
 # load data and map id-transform based on training time vocabulary
 inpH = InputHelper()
 id_test, x1_test, x2_test = inpH.getTestDataSet(FLAGS.eval_filepath, FLAGS.vocab_filepath, 30)
+print(x1_test)
+exit(1)
+
+# def func_(x):
+#     return 1-x
+#
+# func_ = np.vectorize(func_)
 
 print("\nEvaluating...\n")
 
@@ -79,6 +86,7 @@ with graph.as_default():
         all_d = []
         all_id = []
         id_dev_count = 0
+        count = 0
         for db in batches:
             x1_dev_b, x2_dev_b = zip(*db)
             id_dev = [int(id_test[i]) for i in range(id_dev_count, id_dev_count + len(x1_dev_b))]
@@ -91,22 +99,31 @@ with graph.as_default():
             all_predictions = np.concatenate([all_predictions, batch_predictions])
             # print(batch_predictions)
             d = np.copy(batch_predictions)
-            d[d >= 0.5] = 999.0
-            d[d < 0.5] = 1
-            d[d > 1] = 0
+            # print(d)
+            # print(type(d))
+            # d[d >= 0.5] = 999.0
+            # d[d < 0.5] = 1
+            # d[d > 1] = 0
+            # d = func_(d)
+            # print(d)
             # batch_acc = np.mean(y_dev_b == d)
             all_id = np.concatenate([all_id, id_dev])
             all_d = np.concatenate([all_d, d])
             # print("DEV acc {}".format(batch_acc))
+            count += 2 * FLAGS.batch_size
+            print("done for: ", count, "values")
         # for ex in all_predictions:
         #     print(ex)
-        with open("result-.csv", 'w') as f:
+        with open("result-46k.csv", 'w') as f:
             f.write("test_id,is_duplicate\n")
             for id, p in zip(all_id, all_d):
                 id = int(id)
-                p = int(p)
-                if id % 1000 == 0:
-                    print("count", id)
+                # p = int(p)
+                # if id % 1000 == 0:
+                #     print("count", id)
                 f.write(str(id) + "," + str(p) + "\n")
                 # correct_predictions = float(np.mean(all_d == y_test))
                 # print("Accuracy: {:g}".format(correct_predictions))
+            # f.write("272848,0\n")
+            # f.write("250131,0\n")
+            # f.write("1944712,0\n")

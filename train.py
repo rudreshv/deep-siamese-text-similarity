@@ -17,9 +17,9 @@ from random import random
 # ==================================================
 
 tf.flags.DEFINE_integer("embedding_dim", 300, "Dimensionality of character embedding (default: 300)")
-tf.flags.DEFINE_float("dropout_keep_prob", 0.5, "Dropout keep probability (default: 0.5)")
+tf.flags.DEFINE_float("dropout_keep_prob", 0.75, "Dropout keep probability (default: 0.5)")
 tf.flags.DEFINE_float("l2_reg_lambda", 0.0, "L2 regularizaion lambda (default: 0.0)")
-tf.flags.DEFINE_string("training_files", "/Users/rudresh/Downloads/kaggle-quora-nlp/train_2.csv", "training file (default: None)")
+tf.flags.DEFINE_string("training_files", "/Users/rudresh/Downloads/kaggle-quora-nlp/train_3.csv", "training file (default: None)")
 tf.flags.DEFINE_integer("hidden_units", 50, "Number of hidden units in softmax regression layer (default:50)")
 
 # Training parameters
@@ -30,10 +30,10 @@ tf.flags.DEFINE_integer("checkpoint_every", 1000, "Save model after this many st
 # Misc Parameters
 tf.flags.DEFINE_boolean("allow_soft_placement", True, "Allow device soft device placement")
 tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on devices")
-# tf.flags.DEFINE_string("word2vec", "/Users/rudresh/git/Siamese-LSTM/GoogleNews-vectors-negative300.bin",
-#                        "use word2vec pre-trained vectors")
-tf.flags.DEFINE_string("word2vec", None,
+tf.flags.DEFINE_string("word2vec", "/Users/rudresh/git/Siamese-LSTM/GoogleNews-vectors-negative300.bin",
                        "use word2vec pre-trained vectors")
+# tf.flags.DEFINE_string("word2vec", None,
+#                        "use word2vec pre-trained vectors")
 
 FLAGS = tf.flags.FLAGS
 FLAGS._parse_flags()
@@ -71,7 +71,7 @@ with tf.Graph().as_default():
 
         # Define Training procedure
         global_step = tf.Variable(0, name="global_step", trainable=False)
-        optimizer = tf.train.AdamOptimizer(1e-3)
+        optimizer = tf.train.AdamOptimizer(3e-4)
         print("initialized siameseModel object")
 
     grads_and_vars = optimizer.compute_gradients(siameseModel.loss)
@@ -129,7 +129,6 @@ with tf.Graph().as_default():
                         ch = f.read(1)
                         ch = bytes.decode(ch)
                         if ch == ' ':
-                            # print("====", word)
                             word = ''.join(word)
                             break
                         if ch != '\n':
@@ -137,6 +136,7 @@ with tf.Graph().as_default():
                     idx = vocab_processor.vocabulary_.get(word)
                     if idx != 0:
                         initW[idx] = np.fromstring(f.read(binary_len), dtype='float32')
+                        print(idx,initW[idx])
                     else:
                         f.read(binary_len)
                 except:
@@ -148,6 +148,7 @@ with tf.Graph().as_default():
     # print("AFTER!!!!!!!")
     # print(vocab_processor.vocabulary_._mapping)
 
+    exit(1)
     print("init all variables")
     graph_def = tf.get_default_graph().as_graph_def()
     graphpb_txt = str(graph_def)
@@ -177,9 +178,11 @@ with tf.Graph().as_default():
             [tr_op_set, global_step, siameseModel.loss, siameseModel.accuracy, siameseModel.distance], feed_dict)
         time_str = datetime.datetime.now().isoformat()
         d = np.copy(dist)
-        d[d >= 0.5] = 999.0
-        d[d < 0.5] = 1
-        d[d > 1.0] = 0
+        # d[d >= 0.5] = 999.0
+        # d[d < 0.5] = 1
+        # d[d > 1.0] = 0
+        d[d >= 0.5] = 1
+        d[d < 0.5] = 0
         accuracy = np.mean(y_batch == d)
         print("TRAIN {}: step {}, loss {:g}, acc {:g}".format(time_str, step, loss, accuracy))
         # print(y_batch, dist, d)
@@ -207,9 +210,11 @@ with tf.Graph().as_default():
             [global_step, siameseModel.loss, siameseModel.accuracy, siameseModel.distance], feed_dict)
         time_str = datetime.datetime.now().isoformat()
         d = np.copy(dist)
-        d[d >= 0.5] = 999.0
-        d[d < 0.5] = 1
-        d[d > 1.0] = 0
+        # d[d >= 0.5] = 999.0
+        # d[d < 0.5] = 1
+        # d[d > 1.0] = 0
+        d[d >= 0.5] = 1
+        d[d < 0.5] = 0
         accuracy = np.mean(y_batch == d)
         print("DEV {}: step {}, loss {:g}, acc {:g}".format(time_str, step, loss, accuracy))
         # print(y_batch, dist, d)

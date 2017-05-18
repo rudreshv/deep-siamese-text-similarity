@@ -4,7 +4,7 @@ import itertools
 from collections import Counter
 import numpy as np
 import time
-import gc
+import gc, csv, codecs
 from tensorflow.contrib import learn
 from gensim.models.word2vec import Word2Vec
 import gzip
@@ -13,39 +13,83 @@ import sys
 
 # reload(sys)
 # sys.setdefaultencoding("utf-8")
+from preprocess import MyVocabularyProcessor
+
 delimiter = ","
 
 
 class InputHelper(object):
+    def clean_str(self, string):
+        """
+        Tokenization/string cleaning for all datasets except for SST.
+        Original taken from https://github.com/yoonkim/CNN_sentence/blob/master/process_data.py
+        """
+        # string = re.sub(r"[^A-Za-z0-9(),!?\'\`]", " ", string)
+        # string = re.sub(r"\'s", " \'s", string)
+        # string = re.sub(r"\'ve", " \'ve", string)
+        # string = re.sub(r"n\'t", " n\'t", string)
+        # string = re.sub(r"\'re", " \'re", string)
+        # string = re.sub(r"\'d", " \'d", string)
+        # string = re.sub(r"\'ll", " \'ll", string)
+        # string = re.sub(r",", " , ", string)
+        # string = re.sub(r"!", " ! ", string)
+        # string = re.sub(r"\(", " \( ", string)
+        # string = re.sub(r"\)", " \) ", string)
+        # string = re.sub(r"\?", " \? ", string)
+        # string = re.sub(r"\s{2,}", " ", string)
+
+        text = re.sub(r"[^A-Za-z0-9^,!.\/'+-=]", " ", string)
+        text = re.sub(r"what's", "what is ", text)
+        text = re.sub(r"\'s", " ", text)
+        text = re.sub(r"\'ve", " have ", text)
+        text = re.sub(r"can't", "cannot ", text)
+        text = re.sub(r"n't", " not ", text)
+        text = re.sub(r"i'm", "i am ", text)
+        text = re.sub(r"\'re", " are ", text)
+        text = re.sub(r"\'d", " would ", text)
+        text = re.sub(r"\'ll", " will ", text)
+        text = re.sub(r",", " ", text)
+        text = re.sub(r"\.", " ", text)
+        text = re.sub(r"!", " ! ", text)
+        text = re.sub(r"\/", " ", text)
+        text = re.sub(r"\^", " ^ ", text)
+        text = re.sub(r"\+", " + ", text)
+        text = re.sub(r"\-", " - ", text)
+        text = re.sub(r"\=", " = ", text)
+        text = re.sub(r"'", " ", text)
+        text = re.sub(r"(\d+)(k)", r"\g<1>000", text)
+        text = re.sub(r":", " : ", text)
+        text = re.sub(r" e g ", " eg ", text)
+        text = re.sub(r" b g ", " bg ", text)
+        text = re.sub(r" u s ", " american ", text)
+        text = re.sub(r"\\0s", "0", text)
+        text = re.sub(r" 9 11 ", "911", text)
+        text = re.sub(r"e - mail", "email", text)
+        text = re.sub(r"j k", "jk", text)
+        text = re.sub(r"\s{2,}", " ", text)
+
+        return text.strip().lower()
+
+
+
     def getTsvData(self, filepath):
         print("Loading training data from " + filepath)
         x1 = []
         x2 = []
         y = []
         # positive samples from file
-        for line in open(filepath, "rb"):
+        for line in codecs.open(filepath, "r",encoding='utf-8', errors='ignore'):
             try:
-                line = bytes.decode(line)
-                l = line.strip().split(delimiter)
-                if len(l) < 2:
+                # line = bytes.decode(line)
+                l = [line for line in csv.reader([line], skipinitialspace=True)][0]
+                if len(l) != 3:
+                    print(len(l), "Condition not satisfied>>>> ", line)
                     continue
-                # if random() > 0.5:;
-                x1.append(l[0].lower())
-                x2.append(l[1].lower())
-                # else:
-                #     x1.append(l[1].lower())
-                #     x2.append(l[0].lower())
+                x1.append(self.clean_str(l[0].lower()))
+                x2.append(self.clean_str(l[1].lower()))
                 y.append(1 if (l[2].strip().lower() == 'y' or l[2].strip().lower() == '1') else 0)  # np.array([0,1]))
             except Exception as e:
                 print(e)
-        # generate random negative samples
-        # combined = np.asarray(x1 + x2)
-        # shuffle_indices = np.random.permutation(np.arange(len(combined)))
-        # combined_shuff = combined[shuffle_indices]
-        # for i in range(len(combined)):
-        #     x1.append(combined[i])
-        #     x2.append(combined_shuff[i])
-        #     y.append(0)  # np.array([1,0]))
         return np.asarray(x1), np.asarray(x2), np.asarray(y)
 
     def getTsvTestData(self, filepath):
@@ -55,13 +99,14 @@ class InputHelper(object):
         x2 = []
         # y = []
         # positive samples from file
-        for line in open(filepath):
-            l = line.strip().split(delimiter)
-            if len(l) < 3:
+        for line in codecs.open(filepath, "r",encoding='utf-8', errors='ignore'):
+            l = [line for line in csv.reader([line], skipinitialspace=True)][0]
+            if len(l) != 3:
+                print(len(l), "Condition not satisfied>>>> ", line)
                 continue
             id.append(l[0].lower())
-            x1.append(l[1].lower())
-            x2.append(l[2].lower())
+            x1.append(self.clean_str(l[1].lower()))
+            x2.append(self.clean_str(l[2].lower()))
             # y.append(1 if (l[0].strip().lower() == 'y' or l[0].strip().lower() == '1') else 0)  # np.array([0,1]))
         return np.asarray(id), np.asarray(x1), np.asarray(x2)
 
@@ -110,6 +155,7 @@ class InputHelper(object):
 
         # Build vocabulary
         print("Building vocabulary")
+        # vocab_processor = MyVocabularyProcessor(max_document_length, min_frequency=0)
         vocab_processor = learn.preprocessing.VocabularyProcessor(max_document_length, min_frequency=0)
         vocab_processor.fit_transform(np.concatenate((x2_text, x1_text), axis=0))
         print("Length of loaded vocabulary ={}".format(len(vocab_processor.vocabulary_)))
@@ -145,6 +191,7 @@ class InputHelper(object):
         id_list, x1_temp, x2_temp = self.getTsvTestData(data_path)
 
         # Build vocabulary
+        # vocab_processor = MyVocabularyProcessor(max_document_length, min_frequency=0)
         vocab_processor = learn.preprocessing.VocabularyProcessor(max_document_length, min_frequency=0)
         vocab_processor = vocab_processor.restore(vocab_path)
         # print(len(vocab_processor.vocabulary_))
@@ -154,4 +201,4 @@ class InputHelper(object):
         # Randomly shuffle data
         del vocab_processor
         gc.collect()
-        return id_list,x1, x2
+        return id_list, x1, x2
